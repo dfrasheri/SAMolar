@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { db } from "../src/db/client";
-import { users, patients } from "../src/db/schema";
+import { like } from "drizzle-orm";
+import { users, patients, calendars, appointments } from "../src/db/schema";
 import { hashPassword } from "../src/lib/password";
 
 const password = crypto.randomBytes(6).toString("hex");
@@ -25,6 +26,31 @@ const fakePatients = [
 
 fakePatients.forEach((p, i) => {
   db.insert(patients).values({ id: `pat_test_${i + 1}`, ...p }).onConflictDoNothing().run();
+});
+
+db.insert(calendars).values({ id: "cal_general", name: "General", durationMin: 30 }).onConflictDoNothing().run();
+db.insert(calendars).values({ id: "cal_hygiene", name: "Hygiene", durationMin: 45 }).onConflictDoNothing().run();
+
+const day = new Date();
+day.setHours(0, 0, 0, 0);
+const at = (offset: number, hour: number) => Math.floor(new Date(day.getTime() + offset * 86400000 + hour * 3600000).getTime() / 1000);
+
+const fakeAppointments = [
+  { calendarId: "cal_general", patientId: "pat_test_1", title: "checkup", offset: 0, hour: 9, mins: 30, status: "confirmed" },
+  { calendarId: "cal_hygiene", patientId: "pat_test_2", title: "cleaning", offset: 0, hour: 11, mins: 45, status: "booked" },
+  { calendarId: "cal_general", patientId: "pat_test_3", title: "whitening consult", offset: 1, hour: 10, mins: 30, status: "booked" },
+  { calendarId: "cal_general", patientId: "pat_test_4", title: "filling", offset: 2, hour: 14, mins: 30, status: "booked" },
+  { calendarId: "cal_hygiene", patientId: "pat_test_5", title: "cleaning", offset: -3, hour: 9, mins: 45, status: "showed" },
+  { calendarId: "cal_general", patientId: "pat_test_1", title: "crown fitting", offset: -5, hour: 15, mins: 30, status: "no-show" },
+  { calendarId: "cal_general", patientId: "pat_test_2", title: "extraction", offset: -8, hour: 10, mins: 30, status: "cancelled" },
+];
+
+db.delete(appointments).where(like(appointments.id, "apt_test_%")).run();
+fakeAppointments.forEach((a, i) => {
+  const startsAt = at(a.offset, a.hour);
+  db.insert(appointments)
+    .values({ id: `apt_test_${i + 1}`, calendarId: a.calendarId, patientId: a.patientId, title: a.title, startsAt, endsAt: startsAt + a.mins * 60, status: a.status })
+    .run();
 });
 
 console.log("login: admin@example.com /", password);

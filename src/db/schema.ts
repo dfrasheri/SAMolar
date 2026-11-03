@@ -33,3 +33,22 @@ export const patients = sqliteTable("patients", {
 });
 
 export type Patient = typeof patients.$inferSelect;
+
+export const calendars = sqliteTable("calendars", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  durationMin: integer("duration_min").notNull().default(30),
+});
+
+export const appointments = sqliteTable("appointments", {
+  id: text("id").primaryKey(),
+  calendarId: text("calendar_id").notNull(),
+  patientId: text("patient_id").notNull(),
+  title: text("title"),
+  startsAt: integer("starts_at").notNull(),
+  endsAt: integer("ends_at").notNull(),
+  status: text("status").notNull().default("booked"),
+  notes: text("notes"),
+  createdAt: integer("created_at").default(sql`(unixepoch())`),
+  updatedAt: integer("updated_at").default(sql`(unixepoch())`),
+});
