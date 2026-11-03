@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import { db } from "../src/db/client";
 import { eq, like } from "drizzle-orm";
-import { users, patients, calendars, appointments, services, treatments, invoices, invoiceLines, payments, recalls, auditLog, patientImages, patientNotes } from "../src/db/schema";
+import { users, patients, calendars, appointments, services, treatments, invoices, invoiceLines, payments, recalls, auditLog, patientImages, patientNotes, patientTasks } from "../src/db/schema";
 import { saveUpload, sniffImage } from "../src/lib/storage";
 import { hashPassword } from "../src/lib/password";
 
@@ -139,6 +139,18 @@ fakeNotes.forEach((n, i) => {
     .values({ id: `note_test_${i + 1}`, patientId: n.patientId, body: n.body, authorName: "Demo Admin", createdAt: now - n.ago * 86400 })
     .onConflictDoNothing()
     .run();
+});
+
+const fakeTasks = [
+  { patientId: "pat_test_2", title: "Send implant quote", dueDate: dateOffset(-1), done: false },
+  { patientId: "pat_test_3", title: "Check whitening shade", dueDate: dateOffset(0), done: false },
+  { patientId: "pat_test_1", title: "Ask about insurance papers", dueDate: dateOffset(5), done: false },
+  { patientId: "pat_test_5", title: "Call about the missed visit", dueDate: dateOffset(-6), done: true },
+];
+
+db.delete(patientTasks).where(like(patientTasks.id, "tsk_test_%")).run();
+fakeTasks.forEach((t, i) => {
+  db.insert(patientTasks).values({ id: `tsk_test_${i + 1}`, ...t }).run();
 });
 
 const xrayDir = path.resolve(process.env.DATA_DIR || "./data", "xrays");

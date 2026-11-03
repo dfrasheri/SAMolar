@@ -151,3 +151,12 @@ export const patientNotes = sqliteTable("patient_notes", {
   authorName: text("author_name"),
   createdAt: integer("created_at").default(sql`(unixepoch())`),
 });
+
+export const patientTasks = sqliteTable("patient_tasks", {
+  id: text("id").primaryKey(),
+  patientId: text("patient_id").notNull(),
+  title: text("title").notNull(),
+  dueDate: text("due_date"),
+  done: integer("done", { mode: "boolean" }).notNull().default(false),
+  createdAt: integer("created_at").default(sql`(unixepoch())`),
+});
