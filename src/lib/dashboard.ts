@@ -52,6 +52,18 @@ export function getOverdueRecalls() {
     .all();
 }
 
+export function getOpenInvoices() {
+  const rows = db
+    .select({ id: invoices.id, number: invoices.number, patientId: invoices.patientId, firstName: patients.firstName, lastName: patients.lastName })
+    .from(invoices)
+    .leftJoin(patients, eq(patients.id, invoices.patientId))
+    .where(eq(invoices.status, "open"))
+    .orderBy(asc(invoices.number))
+    .limit(5)
+    .all();
+  return rows.map((r) => ({ ...r, balance: totals(r.id).balance }));
+}
+
 export function getCounts() {
   const { from, to } = todayRange();
   const activePatients = db.select().from(patients).where(eq(patients.status, "active")).all().length;

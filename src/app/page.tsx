@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
-import { getCounts, getOverdueRecalls, getToday } from "@/lib/dashboard";
+import { getCounts, getOpenInvoices, getOverdueRecalls, getToday } from "@/lib/dashboard";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +19,7 @@ export default function Home() {
   const counts = getCounts();
   const today = getToday();
   const overdue = getOverdueRecalls();
+  const open = getOpenInvoices();
 
   return (
     <div>
@@ -63,6 +64,20 @@ export default function Home() {
           </li>
         ))}
         {overdue.length === 0 && <li className="p-4 text-slate-400">Nobody is overdue.</li>}
+      </ul>
+
+      <h2 className="mb-2 mt-8 font-semibold">Open invoices</h2>
+      <ul className="max-w-3xl rounded-lg border bg-white text-sm">
+        {open.map((i) => (
+          <li key={i.id} className="flex items-center justify-between border-b p-3 last:border-0">
+            <span>
+              <Link href={`/invoices/${i.id}`} className="text-brand">{i.number}</Link>
+              <span className="ml-2 text-slate-500">{[i.firstName, i.lastName].filter(Boolean).join(" ")}</span>
+            </span>
+            <span>{i.balance.toFixed(2)}</span>
+          </li>
+        ))}
+        {open.length === 0 && <li className="p-4 text-slate-400">Everything is paid.</li>}
       </ul>
     </div>
   );
