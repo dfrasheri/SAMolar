@@ -3,6 +3,7 @@ import { and, desc, eq, like, or } from "drizzle-orm";
 import { db } from "@/db/client";
 import { patients } from "@/db/schema";
 import { newId, pick, requireUser } from "@/lib/api";
+import { audit } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const { denied } = requireUser();
+  const { user, denied } = requireUser();
   if (denied) return denied;
 
   const body = await req.json().catch(() => ({}));
@@ -39,5 +40,6 @@ export async function POST(req: Request) {
 
   const id = newId("pat");
   db.insert(patients).values({ id, ...pick(body, FIELDS) }).run();
+  audit(user, "create", "patient", id, `created patient ${[body.firstName, body.lastName].filter(Boolean).join(" ")}`);
   return NextResponse.json({ id }, { status: 201 });
 }
