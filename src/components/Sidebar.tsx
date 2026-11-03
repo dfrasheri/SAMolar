@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Users, CalendarDays, Tag, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, CalendarDays, Tag, Receipt, LogOut } from "lucide-react";
 
 const links = [
   { href: "/", label: "Waiting room", icon: LayoutDashboard },
   { href: "/patients", label: "Patients", icon: Users },
   { href: "/calendar", label: "Appointments book", icon: CalendarDays },
   { href: "/services", label: "Services", icon: Tag },
+  { href: "/invoices", label: "Invoices", icon: Receipt },
 ];
 
 export default function Sidebar({ userName }: { userName: string }) {
