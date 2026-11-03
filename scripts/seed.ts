@@ -1,7 +1,10 @@
 import crypto from "crypto";
+import fs from "fs";
+import path from "path";
 import { db } from "../src/db/client";
 import { eq, like } from "drizzle-orm";
-import { users, patients, calendars, appointments, services, treatments, invoices, invoiceLines, payments, recalls, auditLog } from "../src/db/schema";
+import { users, patients, calendars, appointments, services, treatments, invoices, invoiceLines, payments, recalls, auditLog, patientImages } from "../src/db/schema";
+import { saveUpload, sniffImage } from "../src/lib/storage";
 import { hashPassword } from "../src/lib/password";
 
 const password = crypto.randomBytes(6).toString("hex");
@@ -123,5 +126,18 @@ fakeAudit.forEach((a, i) => {
     .values({ id: `aud_test_${i + 1}`, userId: "usr_admin", userName: "Demo Admin", action: a.action, entity: a.entity, entityId: a.entityId, summary: a.summary, createdAt: now - a.ago * 86400 })
     .run();
 });
+
+const xrayDir = path.resolve(process.env.DATA_DIR || "./data", "xrays");
+for (let i = 1; i <= 3; i++) {
+  const file = path.join(xrayDir, `panoramic-${i}.jpg`);
+  const id = `img_test_${i}`;
+  if (!fs.existsSync(file) || db.select().from(patientImages).where(eq(patientImages.id, id)).get()) continue;
+  const bytes = fs.readFileSync(file);
+  const sniffed = sniffImage(bytes);
+  if (!sniffed || !sniffed.width || !sniffed.height) continue;
+  db.insert(patientImages)
+    .values({ id, patientId: `pat_test_${i}`, filename: saveUpload(bytes, sniffed.mime), mime: sniffed.mime, width: sniffed.width, height: sniffed.height, caption: `demo panoramic ${i}` })
+    .run();
+}
 
 console.log("login: admin@example.com /", password);
