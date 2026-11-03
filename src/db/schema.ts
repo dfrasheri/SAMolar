@@ -16,3 +16,20 @@ export const sessions = sqliteTable("sessions", {
 });
 
 export type User = typeof users.$inferSelect;
+
+export const patients = sqliteTable("patients", {
+  id: text("id").primaryKey(),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  phone: text("phone"),
+  email: text("email"),
+  country: text("country"),
+  city: text("city"),
+  language: text("language"),
+  notes: text("notes"),
+  status: text("status").notNull().default("active"),
+  createdAt: integer("created_at").default(sql`(unixepoch())`),
+  updatedAt: integer("updated_at").default(sql`(unixepoch())`),
+});
+
+export type Patient = typeof patients.$inferSelect;
