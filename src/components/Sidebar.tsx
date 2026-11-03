@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, LogOut } from "lucide-react";
 
-const links = [{ href: "/", label: "Waiting room", icon: LayoutDashboard }];
+const links = [
+  { href: "/", label: "Waiting room", icon: LayoutDashboard },
+  { href: "/patients", label: "Chairs", icon: Users },
+];
 
 export default function Sidebar({ userName }: { userName: string }) {
   const path = usePathname();
