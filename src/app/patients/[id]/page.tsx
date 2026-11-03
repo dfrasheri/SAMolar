@@ -6,6 +6,7 @@ import PatientForm, { type PatientFormData } from "@/components/PatientForm";
 import TreatmentsPanel from "@/components/TreatmentsPanel";
 import ImagingPanel from "@/components/ImagingPanel";
 import PatientHistory from "@/components/PatientHistory";
+import NotesPanel from "@/components/NotesPanel";
 
 export default function PatientPage() {
   const { id } = useParams<{ id: string }>();
@@ -53,6 +54,7 @@ export default function PatientPage() {
         }}
       />
       {saved && <p className="mt-2 text-sm text-brand">Saved.</p>}
+      <NotesPanel patientId={id} />
       <PatientHistory patientId={id} />
       <TreatmentsPanel patientId={id} />
       <ImagingPanel patientId={id} />
