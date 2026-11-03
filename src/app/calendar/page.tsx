@@ -12,6 +12,9 @@ type Apt = {
   lastName: string | null;
 };
 
+type Cal = { id: string; name: string; durationMin: number };
+type Pat = { id: string; firstName: string | null; lastName: string | null };
+
 const pad = (n: number) => String(n).padStart(2, "0");
 const dayKey = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
@@ -21,6 +24,10 @@ export default function CalendarPage() {
     return new Date(d.getFullYear(), d.getMonth(), 1);
   });
   const [apts, setApts] = useState<Apt[]>([]);
+  const [cals, setCals] = useState<Cal[]>([]);
+  const [pats, setPats] = useState<Pat[]>([]);
+  const [form, setForm] = useState({ calendarId: "", patientId: "", date: "", time: "09:00", title: "" });
+  const [error, setError] = useState("");
 
   const range = useMemo(() => {
     const from = Math.floor(month.getTime() / 1000);
@@ -36,6 +43,33 @@ export default function CalendarPage() {
   useEffect(() => {
     load();
   }, [range.from]);
+
+  useEffect(() => {
+    fetch("/api/calendars").then((r) => r.json()).then(setCals);
+    fetch("/api/patients").then((r) => r.json()).then(setPats);
+  }, []);
+
+  async function book(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    const cal = cals.find((c) => c.id === form.calendarId);
+    if (!cal || !form.patientId || !form.date) return setError("pick a calendar, a patient and a date");
+    const start = Math.floor(new Date(`${form.date}T${form.time}`).getTime() / 1000);
+    const res = await fetch("/api/appointments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        calendarId: cal.id,
+        patientId: form.patientId,
+        startsAt: start,
+        endsAt: start + cal.durationMin * 60,
+        title: form.title,
+      }),
+    });
+    if (!res.ok) return setError((await res.json()).error || "could not book");
+    setForm({ ...form, title: "" });
+    load();
+  }
 
   const byDay = new Map<string, Apt[]>();
   for (const a of apts) {
@@ -60,6 +94,26 @@ export default function CalendarPage() {
           Next
         </button>
       </div>
+
+      <form onSubmit={book} className="mb-4 flex flex-wrap items-end gap-2 rounded-lg border bg-white p-3 text-sm">
+        <select className="rounded border px-2 py-2" value={form.calendarId} onChange={(e) => setForm({ ...form, calendarId: e.target.value })}>
+          <option value="">Calendar</option>
+          {cals.map((c) => (
+            <option key={c.id} value={c.id}>{c.name}</option>
+          ))}
+        </select>
+        <select className="rounded border px-2 py-2" value={form.patientId} onChange={(e) => setForm({ ...form, patientId: e.target.value })}>
+          <option value="">Patient</option>
+          {pats.map((p) => (
+            <option key={p.id} value={p.id}>{[p.firstName, p.lastName].filter(Boolean).join(" ")}</option>
+          ))}
+        </select>
+        <input type="date" className="rounded border px-2 py-2" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+        <input type="time" className="rounded border px-2 py-2" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} />
+        <input className="rounded border px-2 py-2" placeholder="Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+        <button className="rounded bg-brand px-3 py-2 text-white hover:bg-brand-dark">Book a chair</button>
+        {error && <span className="text-red-600">{error}</span>}
+      </form>
 
       <div className="grid grid-cols-7 gap-px overflow-hidden rounded-lg border bg-slate-200 text-xs">
         {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
