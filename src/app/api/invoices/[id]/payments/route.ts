@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { invoices, payments } from "@/db/schema";
 import { newId, requireUser } from "@/lib/api";
+import { audit } from "@/lib/audit";
 import { round2, totals } from "@/lib/invoices";
 import { stub, stubCharge } from "@/lib/stub";
 
@@ -11,7 +12,7 @@ export const dynamic = "force-dynamic";
 const METHODS = ["cash", "card", "transfer"];
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
-  const { denied } = requireUser();
+  const { user, denied } = requireUser();
   if (denied) return denied;
 
   const invoice = db.select().from(invoices).where(eq(invoices.id, params.id)).get();
@@ -39,5 +40,6 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     if (settled) tx.update(invoices).set({ status: "paid", paidAt: Math.floor(Date.now() / 1000) }).where(eq(invoices.id, invoice.id)).run();
   });
 
+  audit(user, "create", "payment", id, `recorded ${amount.toFixed(2)} ${body.method} on ${invoice.number}`);
   return NextResponse.json({ id, ref, status: settled ? "paid" : "open" }, { status: 201 });
 }
