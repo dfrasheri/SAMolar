@@ -14,6 +14,7 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const from = Number(url.searchParams.get("from")) || 0;
   const to = Number(url.searchParams.get("to")) || 4102444800;
+  const patientId = url.searchParams.get("patientId");
 
   const rows = db
     .select({
@@ -30,7 +31,7 @@ export async function GET(req: Request) {
     })
     .from(appointments)
     .leftJoin(patients, eq(patients.id, appointments.patientId))
-    .where(and(gte(appointments.startsAt, from), lt(appointments.startsAt, to)))
+    .where(and(gte(appointments.startsAt, from), lt(appointments.startsAt, to), patientId ? eq(appointments.patientId, patientId) : undefined))
     .orderBy(asc(appointments.startsAt))
     .all();
 
