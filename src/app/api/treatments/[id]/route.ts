@@ -3,12 +3,13 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { treatments } from "@/db/schema";
 import { requireUser } from "@/lib/api";
+import { audit } from "@/lib/audit";
 import { isTooth } from "@/lib/teeth";
 
 export const dynamic = "force-dynamic";
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
-  const { denied } = requireUser();
+  const { user, denied } = requireUser();
   if (denied) return denied;
   const current = db.select().from(treatments).where(eq(treatments.id, params.id)).get();
   if (!current) return NextResponse.json({ error: "not found" }, { status: 404 });
@@ -34,12 +35,16 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (!Object.keys(changes).length) return NextResponse.json({ error: "nothing to change" }, { status: 400 });
 
   db.update(treatments).set(changes).where(eq(treatments.id, params.id)).run();
+  audit(user, "update", "treatment", current.id, "status" in changes ? `marked ${current.name} ${changes.status}` : `updated ${current.name}`);
   return NextResponse.json({ ok: true });
 }
 
 export async function DELETE(_: Request, { params }: { params: { id: string } }) {
-  const { denied } = requireUser();
+  const { user, denied } = requireUser();
   if (denied) return denied;
+  const current = db.select().from(treatments).where(eq(treatments.id, params.id)).get();
+  if (!current) return NextResponse.json({ error: "not found" }, { status: 404 });
   db.delete(treatments).where(eq(treatments.id, params.id)).run();
+  audit(user, "delete", "treatment", current.id, `removed ${current.name}`);
   return NextResponse.json({ ok: true });
 }

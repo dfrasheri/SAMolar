@@ -3,6 +3,7 @@ import { asc, eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { patients, services, treatments } from "@/db/schema";
 import { newId, requireUser } from "@/lib/api";
+import { audit } from "@/lib/audit";
 import { isTooth } from "@/lib/teeth";
 
 export const dynamic = "force-dynamic";
@@ -15,11 +16,10 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
 }
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
-  const { denied } = requireUser();
+  const { user, denied } = requireUser();
   if (denied) return denied;
-  if (!db.select().from(patients).where(eq(patients.id, params.id)).get()) {
-    return NextResponse.json({ error: "no such patient" }, { status: 400 });
-  }
+  const patient = db.select().from(patients).where(eq(patients.id, params.id)).get();
+  if (!patient) return NextResponse.json({ error: "no such patient" }, { status: 400 });
 
   const body = await req.json().catch(() => ({}));
   const service = body.serviceId ? db.select().from(services).where(eq(services.id, body.serviceId)).get() : undefined;
@@ -38,5 +38,6 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   db.insert(treatments)
     .values({ id, patientId: params.id, serviceId: service?.id ?? null, name, tooth, price, notes: body.notes || null })
     .run();
+  audit(user, "create", "treatment", id, `planned ${name}${tooth ? ` (tooth ${tooth})` : ""} for ${[patient.firstName, patient.lastName].filter(Boolean).join(" ")}`);
   return NextResponse.json({ id }, { status: 201 });
 }
