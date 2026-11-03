@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { auditLog } from "@/db/schema";
 import { requireUser } from "@/lib/api";
@@ -18,7 +18,7 @@ export async function GET(req: Request) {
     .select()
     .from(auditLog)
     .where(entity ? eq(auditLog.entity, entity) : undefined)
-    .orderBy(desc(auditLog.createdAt), desc(auditLog.id))
+    .orderBy(desc(auditLog.createdAt), desc(sql`rowid`))
     .limit(limit)
     .all();
   return NextResponse.json(rows);
