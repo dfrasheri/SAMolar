@@ -3,6 +3,7 @@ import { and, asc, eq, gt, gte, lt, ne } from "drizzle-orm";
 import { db } from "@/db/client";
 import { appointments, calendars, patients } from "@/db/schema";
 import { newId, pick, requireUser } from "@/lib/api";
+import { audit } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +38,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const { denied } = requireUser();
+  const { user, denied } = requireUser();
   if (denied) return denied;
 
   const body = await req.json().catch(() => ({}));
@@ -49,9 +50,8 @@ export async function POST(req: Request) {
   if (!db.select().from(calendars).where(eq(calendars.id, calendarId)).get()) {
     return NextResponse.json({ error: "no such calendar" }, { status: 400 });
   }
-  if (!db.select().from(patients).where(eq(patients.id, patientId)).get()) {
-    return NextResponse.json({ error: "no such patient" }, { status: 400 });
-  }
+  const patient = db.select().from(patients).where(eq(patients.id, patientId)).get();
+  if (!patient) return NextResponse.json({ error: "no such patient" }, { status: 400 });
 
   const clash = db
     .select({ id: appointments.id })
@@ -69,5 +69,6 @@ export async function POST(req: Request) {
 
   const id = newId("apt");
   db.insert(appointments).values({ id, calendarId, patientId, startsAt, endsAt, ...pick(body, ["title", "notes"]) }).run();
+  audit(user, "create", "appointment", id, `booked ${body.title || "appointment"} for ${[patient.firstName, patient.lastName].filter(Boolean).join(" ")}`);
   return NextResponse.json({ id }, { status: 201 });
 }

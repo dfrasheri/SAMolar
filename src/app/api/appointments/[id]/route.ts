@@ -3,13 +3,14 @@ import { and, eq, gt, lt, ne } from "drizzle-orm";
 import { db } from "@/db/client";
 import { appointments } from "@/db/schema";
 import { pick, requireUser } from "@/lib/api";
+import { audit } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
 const STATUSES = ["booked", "confirmed", "showed", "no-show", "cancelled"];
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
-  const { denied } = requireUser();
+  const { user, denied } = requireUser();
   if (denied) return denied;
 
   const current = db.select().from(appointments).where(eq(appointments.id, params.id)).get();
@@ -48,12 +49,17 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
   const changes = { ...pick(body, ["title", "notes", "status"]), startsAt, endsAt, updatedAt: Math.floor(Date.now() / 1000) };
   db.update(appointments).set(changes).where(eq(appointments.id, params.id)).run();
+  const label = current.title || "appointment";
+  audit(user, "update", "appointment", current.id, status !== current.status ? `set ${label} to ${status}` : timesChanged ? `moved ${label}` : `edited ${label}`);
   return NextResponse.json({ ok: true });
 }
 
 export async function DELETE(_: Request, { params }: { params: { id: string } }) {
-  const { denied } = requireUser();
+  const { user, denied } = requireUser();
   if (denied) return denied;
+  const current = db.select().from(appointments).where(eq(appointments.id, params.id)).get();
+  if (!current) return NextResponse.json({ error: "not found" }, { status: 404 });
   db.delete(appointments).where(eq(appointments.id, params.id)).run();
+  audit(user, "delete", "appointment", current.id, `deleted ${current.title || "appointment"}`);
   return NextResponse.json({ ok: true });
 }
