@@ -12,6 +12,7 @@
     "xrays": "tsx scripts/download-xrays.ts"
   },
   "dependencies": {
+    "@meta-sam/parser": "^0.1.0",
     "better-sqlite3": "^11.8.1",
     "drizzle-orm": "^0.38.4",
     "lucide-react": "^0.469.0",
