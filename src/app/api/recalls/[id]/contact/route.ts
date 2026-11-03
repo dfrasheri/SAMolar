@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { patients, recalls } from "@/db/schema";
 import { requireUser } from "@/lib/api";
+import { audit } from "@/lib/audit";
 import { stub } from "@/lib/stub";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +11,7 @@ export const dynamic = "force-dynamic";
 const CHANNELS = ["sms", "whatsapp", "email"];
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
-  const { denied } = requireUser();
+  const { user, denied } = requireUser();
   if (denied) return denied;
 
   const recall = db.select().from(recalls).where(eq(recalls.id, params.id)).get();
@@ -30,5 +31,6 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   stub("message", { channel: body.channel, to, text });
 
   db.update(recalls).set({ status: "contacted", contactedAt: Math.floor(Date.now() / 1000) }).where(eq(recalls.id, recall.id)).run();
+  audit(user, "update", "recall", recall.id, `contacted ${[patient.firstName, patient.lastName].filter(Boolean).join(" ")} by ${body.channel} (stub)`);
   return NextResponse.json({ ok: true, sent: false, note: "stubbed, nothing was sent" });
 }

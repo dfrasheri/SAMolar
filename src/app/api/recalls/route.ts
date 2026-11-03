@@ -3,6 +3,7 @@ import { asc, eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { patients, recalls } from "@/db/schema";
 import { newId, requireUser } from "@/lib/api";
+import { audit } from "@/lib/audit";
 import { validDate } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
@@ -35,16 +36,16 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const { denied } = requireUser();
+  const { user, denied } = requireUser();
   if (denied) return denied;
 
   const body = await req.json().catch(() => ({}));
-  if (!body.patientId || !db.select().from(patients).where(eq(patients.id, body.patientId)).get()) {
-    return NextResponse.json({ error: "no such patient" }, { status: 400 });
-  }
+  const patient = body.patientId ? db.select().from(patients).where(eq(patients.id, body.patientId)).get() : undefined;
+  if (!patient) return NextResponse.json({ error: "no such patient" }, { status: 400 });
   if (!validDate(body.dueDate)) return NextResponse.json({ error: "dueDate must be YYYY-MM-DD" }, { status: 400 });
 
   const id = newId("rcl");
   db.insert(recalls).values({ id, patientId: body.patientId, dueDate: body.dueDate, reason: body.reason || null }).run();
+  audit(user, "create", "recall", id, `added recall for ${[patient.firstName, patient.lastName].filter(Boolean).join(" ")} due ${body.dueDate}`);
   return NextResponse.json({ id }, { status: 201 });
 }

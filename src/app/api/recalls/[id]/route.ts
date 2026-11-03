@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { recalls } from "@/db/schema";
 import { requireUser } from "@/lib/api";
+import { audit } from "@/lib/audit";
 import { validDate } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
@@ -10,11 +11,10 @@ export const dynamic = "force-dynamic";
 const STATUSES = ["pending", "contacted", "done", "dismissed"];
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
-  const { denied } = requireUser();
+  const { user, denied } = requireUser();
   if (denied) return denied;
-  if (!db.select().from(recalls).where(eq(recalls.id, params.id)).get()) {
-    return NextResponse.json({ error: "not found" }, { status: 404 });
-  }
+  const current = db.select().from(recalls).where(eq(recalls.id, params.id)).get();
+  if (!current) return NextResponse.json({ error: "not found" }, { status: 404 });
 
   const body = await req.json().catch(() => ({}));
   const changes: Record<string, unknown> = {};
@@ -30,12 +30,16 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (!Object.keys(changes).length) return NextResponse.json({ error: "nothing to change" }, { status: 400 });
 
   db.update(recalls).set(changes).where(eq(recalls.id, params.id)).run();
+  audit(user, "update", "recall", current.id, "status" in changes ? `set recall ${current.dueDate} to ${changes.status}` : `edited recall ${current.dueDate}`);
   return NextResponse.json({ ok: true });
 }
 
 export async function DELETE(_: Request, { params }: { params: { id: string } }) {
-  const { denied } = requireUser();
+  const { user, denied } = requireUser();
   if (denied) return denied;
+  const current = db.select().from(recalls).where(eq(recalls.id, params.id)).get();
+  if (!current) return NextResponse.json({ error: "not found" }, { status: 404 });
   db.delete(recalls).where(eq(recalls.id, params.id)).run();
+  audit(user, "delete", "recall", current.id, `deleted recall ${current.dueDate}`);
   return NextResponse.json({ ok: true });
 }
