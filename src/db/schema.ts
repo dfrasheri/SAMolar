@@ -123,3 +123,23 @@ export const auditLog = sqliteTable("audit_log", {
   summary: text("summary"),
   createdAt: integer("created_at").default(sql`(unixepoch())`),
 });
+
+export const patientImages = sqliteTable("patient_images", {
+  id: text("id").primaryKey(),
+  patientId: text("patient_id").notNull(),
+  filename: text("filename").notNull(),
+  mime: text("mime").notNull(),
+  width: integer("width").notNull(),
+  height: integer("height").notNull(),
+  caption: text("caption"),
+  createdAt: integer("created_at").default(sql`(unixepoch())`),
+});
+
+export const segmentations = sqliteTable("segmentations", {
+  id: text("id").primaryKey(),
+  imageId: text("image_id").notNull(),
+  prompt: text("prompt").notNull(),
+  source: text("source").notNull(),
+  objects: text("objects").notNull().default("[]"),
+  createdAt: integer("created_at").default(sql`(unixepoch())`),
+});
