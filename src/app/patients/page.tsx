@@ -27,7 +27,7 @@ export default function PatientsPage() {
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Chairs</h1>
+        <h1 className="text-xl font-semibold">Patients</h1>
         <Link href="/patients/new" className="rounded bg-brand px-3 py-2 text-sm text-white hover:bg-brand-dark">
           Seat a patient
         </Link>

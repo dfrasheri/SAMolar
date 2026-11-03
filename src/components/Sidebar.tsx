@@ -6,7 +6,7 @@ import { LayoutDashboard, Users, LogOut } from "lucide-react";
 
 const links = [
   { href: "/", label: "Waiting room", icon: LayoutDashboard },
-  { href: "/patients", label: "Chairs", icon: Users },
+  { href: "/patients", label: "Patients", icon: Users },
 ];
 
 export default function Sidebar({ userName }: { userName: string }) {
