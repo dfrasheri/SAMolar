@@ -60,3 +60,16 @@ export const services = sqliteTable("services", {
   durationMin: integer("duration_min").notNull().default(30),
   active: integer("active", { mode: "boolean" }).notNull().default(true),
 });
+
+export const treatments = sqliteTable("treatments", {
+  id: text("id").primaryKey(),
+  patientId: text("patient_id").notNull(),
+  serviceId: text("service_id"),
+  name: text("name").notNull(),
+  tooth: integer("tooth"),
+  price: real("price").notNull().default(0),
+  status: text("status").notNull().default("planned"),
+  notes: text("notes"),
+  createdAt: integer("created_at").default(sql`(unixepoch())`),
+  doneAt: integer("done_at"),
+});

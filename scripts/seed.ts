@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import { db } from "../src/db/client";
 import { like } from "drizzle-orm";
-import { users, patients, calendars, appointments, services } from "../src/db/schema";
+import { users, patients, calendars, appointments, services, treatments } from "../src/db/schema";
 import { hashPassword } from "../src/lib/password";
 
 const password = crypto.randomBytes(6).toString("hex");
@@ -64,6 +64,20 @@ const fakeServices = [
 
 fakeServices.forEach((s, i) => {
   db.insert(services).values({ id: `svc_test_${i + 1}`, ...s }).onConflictDoNothing().run();
+});
+
+const now = Math.floor(Date.now() / 1000);
+const fakeTreatments = [
+  { patientId: "pat_test_1", serviceId: "svc_test_3", name: "Filling", tooth: 36, price: 80, status: "done", doneAt: now - 20 * 86400 },
+  { patientId: "pat_test_1", serviceId: "svc_test_5", name: "Crown", tooth: 46, price: 400, status: "planned", doneAt: null },
+  { patientId: "pat_test_1", serviceId: "svc_test_2", name: "Cleaning", tooth: null, price: 50, status: "done", doneAt: now - 60 * 86400 },
+  { patientId: "pat_test_2", serviceId: "svc_test_6", name: "Implant", tooth: 14, price: 900, status: "planned", doneAt: null },
+  { patientId: "pat_test_3", serviceId: "svc_test_4", name: "Whitening", tooth: null, price: 150, status: "planned", doneAt: null },
+  { patientId: "pat_test_5", serviceId: "svc_test_3", name: "Filling", tooth: 25, price: 80, status: "done", doneAt: now - 10 * 86400 },
+];
+
+fakeTreatments.forEach((t, i) => {
+  db.insert(treatments).values({ id: `trt_test_${i + 1}`, ...t }).onConflictDoNothing().run();
 });
 
 console.log("login: admin@example.com /", password);
