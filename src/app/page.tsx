@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
-import { getCounts, getOpenInvoices, getOverdueRecalls, getToday } from "@/lib/dashboard";
+import { getCounts, getOpenInvoices, getOpenTasks, getOverdueRecalls, getToday } from "@/lib/dashboard";
+import { todayDate } from "@/lib/dashboard";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,8 @@ export default function Home() {
   const today = getToday();
   const overdue = getOverdueRecalls();
   const open = getOpenInvoices();
+  const tasks = getOpenTasks();
+  const todayStr = todayDate();
 
   return (
     <div>
@@ -64,6 +67,22 @@ export default function Home() {
           </li>
         ))}
         {overdue.length === 0 && <li className="p-4 text-slate-400">Nobody is overdue.</li>}
+      </ul>
+
+      <h2 className="mb-2 mt-8 font-semibold">To do</h2>
+      <ul className="max-w-3xl rounded-lg border bg-white text-sm">
+        {tasks.map((t) => (
+          <li key={t.id} className="flex items-center justify-between border-b p-3 last:border-0">
+            <span>
+              {t.title}
+              <Link href={`/patients/${t.patientId}`} className="ml-2 text-brand">
+                {[t.firstName, t.lastName].filter(Boolean).join(" ")}
+              </Link>
+            </span>
+            {t.dueDate && <span className={`text-xs ${t.dueDate < todayStr ? "text-red-600" : "text-slate-500"}`}>{t.dueDate}</span>}
+          </li>
+        ))}
+        {tasks.length === 0 && <li className="p-4 text-slate-400">All caught up.</li>}
       </ul>
 
       <h2 className="mb-2 mt-8 font-semibold">Open invoices</h2>

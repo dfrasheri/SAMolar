@@ -1,6 +1,6 @@
-import { and, asc, eq, gte, inArray, lt, ne } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, lt, ne, sql } from "drizzle-orm";
 import { db } from "@/db/client";
-import { appointments, invoices, patients, recalls } from "@/db/schema";
+import { appointments, invoices, patientTasks, patients, recalls } from "@/db/schema";
 import { totals } from "@/lib/invoices";
 
 export function todayRange() {
@@ -62,6 +62,24 @@ export function getOpenInvoices() {
     .limit(5)
     .all();
   return rows.map((r) => ({ ...r, balance: totals(r.id).balance }));
+}
+
+export function getOpenTasks() {
+  return db
+    .select({
+      id: patientTasks.id,
+      title: patientTasks.title,
+      dueDate: patientTasks.dueDate,
+      patientId: patientTasks.patientId,
+      firstName: patients.firstName,
+      lastName: patients.lastName,
+    })
+    .from(patientTasks)
+    .leftJoin(patients, eq(patients.id, patientTasks.patientId))
+    .where(eq(patientTasks.done, false))
+    .orderBy(sql`${patientTasks.dueDate} is null`, asc(patientTasks.dueDate))
+    .limit(5)
+    .all();
 }
 
 export function getCounts() {
