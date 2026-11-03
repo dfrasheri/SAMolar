@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Users, CalendarDays, Tag, Receipt, BellRing, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, CalendarDays, Tag, Receipt, BellRing, ScrollText, LogOut } from "lucide-react";
 
 const links = [
   { href: "/", label: "Waiting room", icon: LayoutDashboard },
@@ -11,6 +11,7 @@ const links = [
   { href: "/services", label: "Services", icon: Tag },
   { href: "/invoices", label: "Invoices", icon: Receipt },
   { href: "/recalls", label: "Recall list", icon: BellRing },
+  { href: "/audit", label: "Audit log", icon: ScrollText },
 ];
 
 export default function Sidebar({ userName }: { userName: string }) {
