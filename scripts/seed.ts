@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import { db } from "../src/db/client";
 import { eq, like } from "drizzle-orm";
-import { users, patients, calendars, appointments, services, treatments, invoices, invoiceLines, payments } from "../src/db/schema";
+import { users, patients, calendars, appointments, services, treatments, invoices, invoiceLines, payments, recalls } from "../src/db/schema";
 import { hashPassword } from "../src/lib/password";
 
 const password = crypto.randomBytes(6).toString("hex");
@@ -89,5 +89,23 @@ db.insert(invoices).values({ id: "inv_test_2", number: "INV-0002", patientId: "p
 db.insert(invoiceLines).values({ id: "inl_test_2", invoiceId: "inv_test_2", description: "Filling (tooth 25)", quantity: 1, unitPrice: 80, treatmentId: "trt_test_6" }).onConflictDoNothing().run();
 db.insert(payments).values({ id: "pay_test_2", invoiceId: "inv_test_2", amount: 30, method: "card", ref: "stub-card-2", createdAt: now - 8 * 86400 }).onConflictDoNothing().run();
 db.update(treatments).set({ invoiceId: "inv_test_2" }).where(eq(treatments.id, "trt_test_6")).run();
+
+const dateOffset = (days: number) => {
+  const x = new Date(day.getTime() + days * 86400000);
+  return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`;
+};
+
+const fakeRecalls = [
+  { patientId: "pat_test_1", dueDate: dateOffset(-12), reason: "6 month cleaning", status: "pending", contactedAt: null },
+  { patientId: "pat_test_3", dueDate: dateOffset(10), reason: "whitening follow up", status: "pending", contactedAt: null },
+  { patientId: "pat_test_2", dueDate: dateOffset(-2), reason: "implant check", status: "contacted", contactedAt: now - 86400 },
+  { patientId: "pat_test_5", dueDate: dateOffset(30), reason: "yearly checkup", status: "pending", contactedAt: null },
+  { patientId: "pat_test_4", dueDate: dateOffset(-40), reason: "cleaning", status: "done", contactedAt: now - 45 * 86400 },
+];
+
+db.delete(recalls).where(like(recalls.id, "rcl_test_%")).run();
+fakeRecalls.forEach((r, i) => {
+  db.insert(recalls).values({ id: `rcl_test_${i + 1}`, ...r }).run();
+});
 
 console.log("login: admin@example.com /", password);

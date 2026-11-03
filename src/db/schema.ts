@@ -102,3 +102,13 @@ export const payments = sqliteTable("payments", {
   ref: text("ref"),
   createdAt: integer("created_at").default(sql`(unixepoch())`),
 });
+
+export const recalls = sqliteTable("recalls", {
+  id: text("id").primaryKey(),
+  patientId: text("patient_id").notNull(),
+  dueDate: text("due_date").notNull(),
+  reason: text("reason"),
+  status: text("status").notNull().default("pending"),
+  contactedAt: integer("contacted_at"),
+  createdAt: integer("created_at").default(sql`(unixepoch())`),
+});
