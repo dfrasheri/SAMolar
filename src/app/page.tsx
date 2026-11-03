@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
-import { getCounts, getToday } from "@/lib/dashboard";
+import { getCounts, getOverdueRecalls, getToday } from "@/lib/dashboard";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +18,7 @@ export default function Home() {
   if (!getSessionUser()) redirect("/login");
   const counts = getCounts();
   const today = getToday();
+  const overdue = getOverdueRecalls();
 
   return (
     <div>
@@ -46,6 +47,22 @@ export default function Home() {
           </li>
         ))}
         {today.length === 0 && <li className="p-4 text-slate-400">Nobody booked today.</li>}
+      </ul>
+
+      <h2 className="mb-2 mt-8 font-semibold">Overdue recalls</h2>
+      <ul className="max-w-3xl rounded-lg border bg-white text-sm">
+        {overdue.map((r) => (
+          <li key={r.id} className="flex items-center justify-between border-b p-3 last:border-0">
+            <span>
+              <Link href={`/patients/${r.patientId}`} className="text-brand">
+                {[r.firstName, r.lastName].filter(Boolean).join(" ")}
+              </Link>
+              <span className="ml-2 text-slate-500">{r.reason}</span>
+            </span>
+            <span className="text-xs text-red-600">due {r.dueDate}</span>
+          </li>
+        ))}
+        {overdue.length === 0 && <li className="p-4 text-slate-400">Nobody is overdue.</li>}
       </ul>
     </div>
   );

@@ -34,6 +34,24 @@ export function getToday() {
     .all();
 }
 
+export function getOverdueRecalls() {
+  return db
+    .select({
+      id: recalls.id,
+      dueDate: recalls.dueDate,
+      reason: recalls.reason,
+      patientId: recalls.patientId,
+      firstName: patients.firstName,
+      lastName: patients.lastName,
+    })
+    .from(recalls)
+    .leftJoin(patients, eq(patients.id, recalls.patientId))
+    .where(and(inArray(recalls.status, ["pending", "contacted"]), lt(recalls.dueDate, todayDate())))
+    .orderBy(asc(recalls.dueDate))
+    .limit(5)
+    .all();
+}
+
 export function getCounts() {
   const { from, to } = todayRange();
   const activePatients = db.select().from(patients).where(eq(patients.status, "active")).all().length;
