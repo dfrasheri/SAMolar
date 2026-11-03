@@ -112,3 +112,14 @@ export const recalls = sqliteTable("recalls", {
   contactedAt: integer("contacted_at"),
   createdAt: integer("created_at").default(sql`(unixepoch())`),
 });
+
+export const auditLog = sqliteTable("audit_log", {
+  id: text("id").primaryKey(),
+  userId: text("user_id"),
+  userName: text("user_name"),
+  action: text("action").notNull(),
+  entity: text("entity").notNull(),
+  entityId: text("entity_id"),
+  summary: text("summary"),
+  createdAt: integer("created_at").default(sql`(unixepoch())`),
+});

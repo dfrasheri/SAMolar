@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import { db } from "../src/db/client";
 import { eq, like } from "drizzle-orm";
-import { users, patients, calendars, appointments, services, treatments, invoices, invoiceLines, payments, recalls } from "../src/db/schema";
+import { users, patients, calendars, appointments, services, treatments, invoices, invoiceLines, payments, recalls, auditLog } from "../src/db/schema";
 import { hashPassword } from "../src/lib/password";
 
 const password = crypto.randomBytes(6).toString("hex");
@@ -106,6 +106,22 @@ const fakeRecalls = [
 db.delete(recalls).where(like(recalls.id, "rcl_test_%")).run();
 fakeRecalls.forEach((r, i) => {
   db.insert(recalls).values({ id: `rcl_test_${i + 1}`, ...r }).run();
+});
+
+const fakeAudit = [
+  { action: "create", entity: "patient", entityId: "pat_test_1", summary: "created patient Test Patient 1", ago: 70 },
+  { action: "create", entity: "appointment", entityId: "apt_test_1", summary: "booked checkup for Test Patient 1", ago: 40 },
+  { action: "update", entity: "treatment", entityId: "trt_test_1", summary: "marked Filling (tooth 36) done", ago: 20 },
+  { action: "create", entity: "invoice", entityId: "inv_test_1", summary: "created invoice INV-0001", ago: 19 },
+  { action: "create", entity: "payment", entityId: "pay_test_1", summary: "recorded 80.00 cash on INV-0001", ago: 18 },
+  { action: "update", entity: "appointment", entityId: "apt_test_6", summary: "set crown fitting to no-show", ago: 5 },
+];
+
+db.delete(auditLog).where(like(auditLog.id, "aud_test_%")).run();
+fakeAudit.forEach((a, i) => {
+  db.insert(auditLog)
+    .values({ id: `aud_test_${i + 1}`, userId: "usr_admin", userName: "Demo Admin", action: a.action, entity: a.entity, entityId: a.entityId, summary: a.summary, createdAt: now - a.ago * 86400 })
+    .run();
 });
 
 console.log("login: admin@example.com /", password);
