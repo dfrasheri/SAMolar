@@ -143,3 +143,11 @@ export const segmentations = sqliteTable("segmentations", {
   objects: text("objects").notNull().default("[]"),
   createdAt: integer("created_at").default(sql`(unixepoch())`),
 });
+
+export const patientNotes = sqliteTable("patient_notes", {
+  id: text("id").primaryKey(),
+  patientId: text("patient_id").notNull(),
+  body: text("body").notNull(),
+  authorName: text("author_name"),
+  createdAt: integer("created_at").default(sql`(unixepoch())`),
+});

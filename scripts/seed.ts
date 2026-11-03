@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import { db } from "../src/db/client";
 import { eq, like } from "drizzle-orm";
-import { users, patients, calendars, appointments, services, treatments, invoices, invoiceLines, payments, recalls, auditLog, patientImages } from "../src/db/schema";
+import { users, patients, calendars, appointments, services, treatments, invoices, invoiceLines, payments, recalls, auditLog, patientImages, patientNotes } from "../src/db/schema";
 import { saveUpload, sniffImage } from "../src/lib/storage";
 import { hashPassword } from "../src/lib/password";
 
@@ -124,6 +124,20 @@ db.delete(auditLog).where(like(auditLog.id, "aud_test_%")).run();
 fakeAudit.forEach((a, i) => {
   db.insert(auditLog)
     .values({ id: `aud_test_${i + 1}`, userId: "usr_admin", userName: "Demo Admin", action: a.action, entity: a.entity, entityId: a.entityId, summary: a.summary, createdAt: now - a.ago * 86400 })
+    .run();
+});
+
+const fakeNotes = [
+  { patientId: "pat_test_1", body: "Prefers morning appointments.", ago: 30 },
+  { patientId: "pat_test_1", body: "Sensitive on the lower right side, go gently.", ago: 20 },
+  { patientId: "pat_test_2", body: "Asked about payment plans for the implant.", ago: 6 },
+  { patientId: "pat_test_3", body: "Wants whitening before a wedding in spring.", ago: 2 },
+];
+
+fakeNotes.forEach((n, i) => {
+  db.insert(patientNotes)
+    .values({ id: `note_test_${i + 1}`, patientId: n.patientId, body: n.body, authorName: "Demo Admin", createdAt: now - n.ago * 86400 })
+    .onConflictDoNothing()
     .run();
 });
 
