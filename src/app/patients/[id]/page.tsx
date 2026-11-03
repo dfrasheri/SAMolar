@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import PatientForm, { type PatientFormData } from "@/components/PatientForm";
 import TreatmentsPanel from "@/components/TreatmentsPanel";
+import ImagingPanel from "@/components/ImagingPanel";
 
 export default function PatientPage() {
   const { id } = useParams<{ id: string }>();
@@ -52,6 +53,7 @@ export default function PatientPage() {
       />
       {saved && <p className="mt-2 text-sm text-brand">Saved.</p>}
       <TreatmentsPanel patientId={id} />
+      <ImagingPanel patientId={id} />
     </div>
   );
 }
