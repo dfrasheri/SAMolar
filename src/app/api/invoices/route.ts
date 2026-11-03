@@ -3,6 +3,7 @@ import { and, desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db/client";
 import { invoiceLines, invoices, patients, treatments } from "@/db/schema";
 import { newId, requireUser } from "@/lib/api";
+import { audit } from "@/lib/audit";
 import { totals } from "@/lib/invoices";
 
 export const dynamic = "force-dynamic";
@@ -45,7 +46,7 @@ export async function GET(req: Request) {
 type NewLine = { description: string; quantity: number; unitPrice: number; treatmentId: string | null };
 
 export async function POST(req: Request) {
-  const { denied } = requireUser();
+  const { user, denied } = requireUser();
   if (denied) return denied;
 
   const body = await req.json().catch(() => ({}));
@@ -87,5 +88,7 @@ export async function POST(req: Request) {
     for (const t of treatmentIds) tx.update(treatments).set({ invoiceId: id }).where(eq(treatments.id, t)).run();
   });
 
+  const created = db.select({ number: invoices.number }).from(invoices).where(eq(invoices.id, id)).get();
+  audit(user, "create", "invoice", id, `created invoice ${created?.number}`);
   return NextResponse.json({ id }, { status: 201 });
 }
