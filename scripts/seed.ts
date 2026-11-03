@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import { db } from "../src/db/client";
 import { like } from "drizzle-orm";
-import { users, patients, calendars, appointments } from "../src/db/schema";
+import { users, patients, calendars, appointments, services } from "../src/db/schema";
 import { hashPassword } from "../src/lib/password";
 
 const password = crypto.randomBytes(6).toString("hex");
@@ -51,6 +51,19 @@ fakeAppointments.forEach((a, i) => {
   db.insert(appointments)
     .values({ id: `apt_test_${i + 1}`, calendarId: a.calendarId, patientId: a.patientId, title: a.title, startsAt, endsAt: startsAt + a.mins * 60, status: a.status })
     .run();
+});
+
+const fakeServices = [
+  { name: "Checkup", price: 30, durationMin: 30 },
+  { name: "Cleaning", price: 50, durationMin: 45 },
+  { name: "Filling", price: 80, durationMin: 30 },
+  { name: "Whitening", price: 150, durationMin: 60 },
+  { name: "Crown", price: 400, durationMin: 60 },
+  { name: "Implant", price: 900, durationMin: 90 },
+];
+
+fakeServices.forEach((s, i) => {
+  db.insert(services).values({ id: `svc_test_${i + 1}`, ...s }).onConflictDoNothing().run();
 });
 
 console.log("login: admin@example.com /", password);

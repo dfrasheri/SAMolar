@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 
 export const users = sqliteTable("users", {
@@ -51,4 +51,12 @@ export const appointments = sqliteTable("appointments", {
   notes: text("notes"),
   createdAt: integer("created_at").default(sql`(unixepoch())`),
   updatedAt: integer("updated_at").default(sql`(unixepoch())`),
+});
+
+export const services = sqliteTable("services", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  price: real("price").notNull().default(0),
+  durationMin: integer("duration_min").notNull().default(30),
+  active: integer("active", { mode: "boolean" }).notNull().default(true),
 });
