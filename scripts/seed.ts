@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import { db } from "../src/db/client";
-import { like } from "drizzle-orm";
-import { users, patients, calendars, appointments, services, treatments } from "../src/db/schema";
+import { eq, like } from "drizzle-orm";
+import { users, patients, calendars, appointments, services, treatments, invoices, invoiceLines, payments } from "../src/db/schema";
 import { hashPassword } from "../src/lib/password";
 
 const password = crypto.randomBytes(6).toString("hex");
@@ -79,5 +79,15 @@ const fakeTreatments = [
 fakeTreatments.forEach((t, i) => {
   db.insert(treatments).values({ id: `trt_test_${i + 1}`, ...t }).onConflictDoNothing().run();
 });
+
+db.insert(invoices).values({ id: "inv_test_1", number: "INV-0001", patientId: "pat_test_1", status: "paid", createdAt: now - 19 * 86400, paidAt: now - 18 * 86400 }).onConflictDoNothing().run();
+db.insert(invoiceLines).values({ id: "inl_test_1", invoiceId: "inv_test_1", description: "Filling (tooth 36)", quantity: 1, unitPrice: 80, treatmentId: "trt_test_1" }).onConflictDoNothing().run();
+db.insert(payments).values({ id: "pay_test_1", invoiceId: "inv_test_1", amount: 80, method: "cash", ref: "stub-cash-1", createdAt: now - 18 * 86400 }).onConflictDoNothing().run();
+db.update(treatments).set({ invoiceId: "inv_test_1" }).where(eq(treatments.id, "trt_test_1")).run();
+
+db.insert(invoices).values({ id: "inv_test_2", number: "INV-0002", patientId: "pat_test_5", status: "open", createdAt: now - 9 * 86400 }).onConflictDoNothing().run();
+db.insert(invoiceLines).values({ id: "inl_test_2", invoiceId: "inv_test_2", description: "Filling (tooth 25)", quantity: 1, unitPrice: 80, treatmentId: "trt_test_6" }).onConflictDoNothing().run();
+db.insert(payments).values({ id: "pay_test_2", invoiceId: "inv_test_2", amount: 30, method: "card", ref: "stub-card-2", createdAt: now - 8 * 86400 }).onConflictDoNothing().run();
+db.update(treatments).set({ invoiceId: "inv_test_2" }).where(eq(treatments.id, "trt_test_6")).run();
 
 console.log("login: admin@example.com /", password);

@@ -70,6 +70,35 @@ export const treatments = sqliteTable("treatments", {
   price: real("price").notNull().default(0),
   status: text("status").notNull().default("planned"),
   notes: text("notes"),
+  invoiceId: text("invoice_id"),
   createdAt: integer("created_at").default(sql`(unixepoch())`),
   doneAt: integer("done_at"),
+});
+
+export const invoices = sqliteTable("invoices", {
+  id: text("id").primaryKey(),
+  number: text("number").notNull().unique(),
+  patientId: text("patient_id").notNull(),
+  status: text("status").notNull().default("open"),
+  note: text("note"),
+  createdAt: integer("created_at").default(sql`(unixepoch())`),
+  paidAt: integer("paid_at"),
+});
+
+export const invoiceLines = sqliteTable("invoice_lines", {
+  id: text("id").primaryKey(),
+  invoiceId: text("invoice_id").notNull(),
+  description: text("description").notNull(),
+  quantity: integer("quantity").notNull().default(1),
+  unitPrice: real("unit_price").notNull().default(0),
+  treatmentId: text("treatment_id"),
+});
+
+export const payments = sqliteTable("payments", {
+  id: text("id").primaryKey(),
+  invoiceId: text("invoice_id").notNull(),
+  amount: real("amount").notNull(),
+  method: text("method").notNull(),
+  ref: text("ref"),
+  createdAt: integer("created_at").default(sql`(unixepoch())`),
 });
