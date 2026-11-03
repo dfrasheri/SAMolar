@@ -6,12 +6,14 @@ A simplified demo of a clinic CRM, built as a portfolio project. It is not a pro
 
 ## What it does
 
-- Patients: list, search, create, edit, archive
+- Waiting room: a dashboard with today's appointments, overdue recalls, open tasks and open invoices
+- Patients: list, search, create, edit, archive, with notes, tasks, appointment and invoice history
 - Appointments book: month view, booking with a double booking check, status changes
 - Services: a simple price list
 - Treatments: per patient, with a tooth chart (planned and done)
 - Invoices: built from done treatments or free lines, with payments
 - Recall list: patients who are due back
+- To do: small tasks tied to patients, with due dates
 - Audit log: who changed what
 - X-rays: upload a panoramic image, run segmentation, see the masks on the image
 
