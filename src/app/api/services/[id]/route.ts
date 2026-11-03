@@ -3,15 +3,15 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { services } from "@/db/schema";
 import { requireUser } from "@/lib/api";
+import { audit } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
-  const { denied } = requireUser();
+  const { user, denied } = requireUser();
   if (denied) return denied;
-  if (!db.select().from(services).where(eq(services.id, params.id)).get()) {
-    return NextResponse.json({ error: "not found" }, { status: 404 });
-  }
+  const current = db.select().from(services).where(eq(services.id, params.id)).get();
+  if (!current) return NextResponse.json({ error: "not found" }, { status: 404 });
 
   const body = await req.json().catch(() => ({}));
   const changes: Record<string, unknown> = {};
@@ -34,5 +34,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (!Object.keys(changes).length) return NextResponse.json({ error: "nothing to change" }, { status: 400 });
 
   db.update(services).set(changes).where(eq(services.id, params.id)).run();
+  const onlyVisibility = Object.keys(changes).length === 1 && "active" in changes;
+  audit(user, "update", "service", current.id, onlyVisibility ? `${changes.active ? "showed" : "hid"} service ${current.name}` : `updated service ${current.name}`);
   return NextResponse.json({ ok: true });
 }
