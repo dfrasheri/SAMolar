@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
-import { getCounts } from "@/lib/dashboard";
+import { getCounts, getToday } from "@/lib/dashboard";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +17,7 @@ function Card({ label, value, href }: { label: string; value: string | number; h
 export default function Home() {
   if (!getSessionUser()) redirect("/login");
   const counts = getCounts();
+  const today = getToday();
 
   return (
     <div>
@@ -27,6 +28,25 @@ export default function Home() {
         <Card label="Overdue recalls" value={counts.overdueRecalls} href="/recalls" />
         <Card label="Still owed" value={counts.owed.toFixed(2)} href="/invoices" />
       </div>
+
+      <h2 className="mb-2 mt-8 font-semibold">Today</h2>
+      <ul className="max-w-3xl rounded-lg border bg-white text-sm">
+        {today.map((a) => (
+          <li key={a.id} className="flex items-center justify-between border-b p-3 last:border-0">
+            <span>
+              <span className="mr-3 text-slate-500">
+                {new Date(a.startsAt * 1000).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+              </span>
+              <Link href={`/patients/${a.patientId}`} className="text-brand">
+                {[a.firstName, a.lastName].filter(Boolean).join(" ")}
+              </Link>
+              <span className="ml-2 text-slate-500">{a.title}</span>
+            </span>
+            <span className="text-xs text-slate-500">{a.status}</span>
+          </li>
+        ))}
+        {today.length === 0 && <li className="p-4 text-slate-400">Nobody booked today.</li>}
+      </ul>
     </div>
   );
 }

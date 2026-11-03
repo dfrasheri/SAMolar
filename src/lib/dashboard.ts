@@ -1,4 +1,4 @@
-import { and, eq, gte, inArray, lt, ne } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, lt, ne } from "drizzle-orm";
 import { db } from "@/db/client";
 import { appointments, invoices, patients, recalls } from "@/db/schema";
 import { totals } from "@/lib/invoices";
@@ -13,6 +13,25 @@ export function todayRange() {
 export function todayDate() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+export function getToday() {
+  const { from, to } = todayRange();
+  return db
+    .select({
+      id: appointments.id,
+      startsAt: appointments.startsAt,
+      title: appointments.title,
+      status: appointments.status,
+      patientId: appointments.patientId,
+      firstName: patients.firstName,
+      lastName: patients.lastName,
+    })
+    .from(appointments)
+    .leftJoin(patients, eq(patients.id, appointments.patientId))
+    .where(and(gte(appointments.startsAt, from), lt(appointments.startsAt, to), ne(appointments.status, "cancelled")))
+    .orderBy(asc(appointments.startsAt))
+    .all();
 }
 
 export function getCounts() {
