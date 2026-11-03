@@ -11,7 +11,7 @@ type Row = {
   createdAt: number | null;
 };
 
-const ENTITIES = ["", "patient", "appointment", "service", "treatment", "invoice", "payment", "recall", "image"];
+const ENTITIES = ["", "patient", "appointment", "service", "treatment", "invoice", "payment", "recall", "task", "image"];
 
 export default function AuditPage() {
   const [rows, setRows] = useState<Row[]>([]);
