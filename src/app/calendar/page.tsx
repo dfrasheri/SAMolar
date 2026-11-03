@@ -71,6 +71,17 @@ export default function CalendarPage() {
     load();
   }
 
+  async function setStatus(id: string, status: string) {
+    setError("");
+    const res = await fetch(`/api/appointments/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    if (!res.ok) setError((await res.json()).error || "could not change status");
+    load();
+  }
+
   const byDay = new Map<string, Apt[]>();
   for (const a of apts) {
     const k = dayKey(new Date(a.startsAt * 1000));
@@ -132,7 +143,12 @@ export default function CalendarPage() {
                 >
                   {new Date(a.startsAt * 1000).toLocaleTimeString("en", { hour: "2-digit", minute: "2-digit" })}{" "}
                   {[a.firstName, a.lastName].filter(Boolean).join(" ")}
-                  <div className="text-[10px] text-slate-500">{a.title} · {a.status}</div>
+                  <div className="text-[10px] text-slate-500">{a.title}</div>
+                  <select className="bg-transparent text-[10px]" value={a.status} onChange={(e) => setStatus(a.id, e.target.value)}>
+                    {["booked", "confirmed", "showed", "no-show", "cancelled"].map((st) => (
+                      <option key={st}>{st}</option>
+                    ))}
+                  </select>
                 </div>
               ))}
             </div>
