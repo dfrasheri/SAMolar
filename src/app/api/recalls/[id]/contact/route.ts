@@ -5,10 +5,12 @@ import { patients, recalls } from "@/db/schema";
 import { requireUser } from "@/lib/api";
 import { audit } from "@/lib/audit";
 import { stub } from "@/lib/stub";
+import { recallLang, recallText } from "@/lib/recall-messages";
 
 export const dynamic = "force-dynamic";
 
-const CHANNELS = ["sms", "whatsapp", "email"];
+// "manual" means the desk sent it themselves, for example from the WhatsApp link.
+const CHANNELS = ["sms", "whatsapp", "email", "manual"];
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   const { user, denied } = requireUser();
@@ -24,13 +26,15 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   if (!CHANNELS.includes(body.channel)) return NextResponse.json({ error: "bad channel" }, { status: 400 });
 
   const patient = db.select().from(patients).where(eq(patients.id, recall.patientId)).get();
-  const to = body.channel === "email" ? patient?.email : patient?.phone;
-  if (!patient || !to) return NextResponse.json({ error: `patient has no ${body.channel === "email" ? "email" : "phone"}` }, { status: 400 });
-
-  const text = `Hi ${patient.firstName || "there"}, it is time for your ${recall.reason || "checkup"}. Call us to book a visit.`;
-  stub("message", { channel: body.channel, to, text });
+  if (!patient) return NextResponse.json({ error: "no such patient" }, { status: 400 });
+  const lang = recallLang(body.lang ?? patient.language);
+  if (body.channel !== "manual") {
+    const to = body.channel === "email" ? patient.email : patient.phone;
+    if (!to) return NextResponse.json({ error: `patient has no ${body.channel === "email" ? "email" : "phone"}` }, { status: 400 });
+    stub("message", { channel: body.channel, to, lang, text: recallText(lang, { firstName: patient.firstName, reason: recall.reason, dueDate: recall.dueDate }) });
+  }
 
   db.update(recalls).set({ status: "contacted", contactedAt: Math.floor(Date.now() / 1000) }).where(eq(recalls.id, recall.id)).run();
-  audit(user, "update", "recall", recall.id, `contacted ${[patient.firstName, patient.lastName].filter(Boolean).join(" ")} by ${body.channel} (stub)`);
-  return NextResponse.json({ ok: true, sent: false, note: "stubbed, nothing was sent" });
+  audit(user, "update", "recall", recall.id, `contacted ${[patient.firstName, patient.lastName].filter(Boolean).join(" ")} by ${body.channel} in ${lang}${body.channel === "manual" ? "" : " (stub)"}`);
+  return NextResponse.json({ ok: true, sent: false, lang, note: body.channel === "manual" ? "marked as contacted" : "stubbed, nothing was sent" });
 }
