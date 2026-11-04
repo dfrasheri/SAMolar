@@ -2,6 +2,7 @@ import "./globals.css";
 import type { ReactNode } from "react";
 import { getSessionUser } from "@/lib/auth";
 import Sidebar from "@/components/Sidebar";
+import CommandPalette from "@/components/CommandPalette";
 
 export const metadata = { title: "SAMolar", description: "Segment anything. Mostly molars." };
 
@@ -14,6 +15,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <div className="flex min-h-screen">
             <Sidebar userName={user.name} />
             <main className="flex-1 p-6">{children}</main>
+            <CommandPalette />
           </div>
         ) : (
           children
