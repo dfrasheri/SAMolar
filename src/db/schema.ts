@@ -204,3 +204,26 @@ export const attendance = sqliteTable("attendance", {
   closedBy: text("closed_by"),
   note: text("note"),
 });
+
+export const quotes = sqliteTable("quotes", {
+  id: text("id").primaryKey(),
+  number: text("number").notNull().unique(),
+  patientId: text("patient_id").notNull(),
+  status: text("status").notNull().default("draft"),
+  note: text("note"),
+  validUntil: text("valid_until"),
+  invoiceId: text("invoice_id"),
+  createdAt: integer("created_at").default(sql`(unixepoch())`),
+});
+
+export const quoteLines = sqliteTable("quote_lines", {
+  id: text("id").primaryKey(),
+  quoteId: text("quote_id").notNull(),
+  serviceId: text("service_id"),
+  description: text("description").notNull(),
+  tooth: integer("tooth"),
+  quantity: integer("quantity").notNull().default(1),
+  unitPrice: real("unit_price").notNull().default(0),
+  band: text("band").notNull().default("core"),
+  position: integer("position").notNull().default(0),
+});
