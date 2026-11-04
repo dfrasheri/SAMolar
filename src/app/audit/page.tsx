@@ -11,11 +11,15 @@ type Row = {
   createdAt: number | null;
 };
 
-const ENTITIES = ["", "patient", "appointment", "service", "treatment", "invoice", "payment", "recall", "task", "image"];
+const ENTITIES = ["", "patient", "appointment", "service", "treatment", "quote", "invoice", "payment", "recall", "task", "image", "stock", "staff", "attendance", "setting", "export"];
+
+const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 export default function AuditPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [entity, setEntity] = useState("");
+  const [from, setFrom] = useState(ymd(new Date(Date.now() - 30 * 86400000)));
+  const [to, setTo] = useState(ymd(new Date()));
 
   useEffect(() => {
     fetch(`/api/audit${entity ? `?entity=${entity}` : ""}`)
@@ -26,11 +30,17 @@ export default function AuditPage() {
   return (
     <div>
       <h1 className="mb-4 text-xl font-semibold">Audit log</h1>
-      <select className="mb-3 rounded border px-2 py-2 text-sm" value={entity} onChange={(e) => setEntity(e.target.value)}>
+      <div className="mb-3 flex flex-wrap items-center gap-2 text-sm">
+        <select className="rounded border px-2 py-2" value={entity} onChange={(e) => setEntity(e.target.value)}>
         {ENTITIES.map((e) => (
           <option key={e} value={e}>{e || "everything"}</option>
         ))}
-      </select>
+        </select>
+        <span className="flex-1" />
+        <input type="date" className="rounded border px-2 py-2" value={from} onChange={(e) => setFrom(e.target.value)} />
+        <input type="date" className="rounded border px-2 py-2" value={to} onChange={(e) => setTo(e.target.value)} />
+        <a href={`/api/audit/export?from=${from}&to=${to}${entity ? `&entity=${entity}` : ""}`} className="rounded border px-3 py-2 hover:bg-slate-100">Download CSV</a>
+      </div>
 
       <table className="w-full rounded-lg border bg-white text-sm">
         <thead className="border-b text-left text-xs text-slate-500">
