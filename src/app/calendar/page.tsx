@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 
 type Apt = {
   id: string;
@@ -97,6 +98,7 @@ export default function CalendarPage() {
     <div>
       <div className="mb-4 flex items-center gap-3">
         <h1 className="text-xl font-semibold">Appointments book</h1>
+        <Link href="/calendar/day" className="text-sm text-brand">Day plan</Link>
         <span className="text-sm text-slate-500">{month.toLocaleString("en", { month: "long", year: "numeric" })}</span>
         <button className="rounded border px-2 py-1 text-sm" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}>
           Prev
