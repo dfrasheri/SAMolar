@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import { db } from "../src/db/client";
 import { eq, like } from "drizzle-orm";
-import { users, patients, calendars, appointments, services, treatments, invoices, invoiceLines, payments, recalls, auditLog, patientImages, patientNotes, patientTasks } from "../src/db/schema";
+import { users, patients, calendars, appointments, services, treatments, invoices, invoiceLines, payments, recalls, auditLog, patientImages, patientNotes, patientTasks, stockItems, stockMoves } from "../src/db/schema";
 import { saveUpload, sniffImage } from "../src/lib/storage";
 import { hashPassword } from "../src/lib/password";
 
@@ -151,6 +151,22 @@ const fakeTasks = [
 db.delete(patientTasks).where(like(patientTasks.id, "tsk_test_%")).run();
 fakeTasks.forEach((t, i) => {
   db.insert(patientTasks).values({ id: `tsk_test_${i + 1}`, ...t }).run();
+});
+
+const fakeStock = [
+  { name: "Gloves M", unit: "box", qty: 3, lowAt: 5 },
+  { name: "Face masks", unit: "box", qty: 12, lowAt: 4 },
+  { name: "Composite A2", unit: "syringe", qty: 6, lowAt: 2 },
+  { name: "Anaesthetic cartridges", unit: "piece", qty: 40, lowAt: 50 },
+  { name: "Cotton rolls", unit: "pack", qty: 9, lowAt: 3 },
+  { name: "Impression material", unit: "kit", qty: 1, lowAt: 2 },
+];
+
+db.delete(stockMoves).where(like(stockMoves.id, "mov_test_%")).run();
+fakeStock.forEach((s, i) => {
+  const id = `stk_test_${i + 1}`;
+  db.insert(stockItems).values({ id, name: s.name, unit: s.unit, qty: s.qty, lowAt: s.lowAt }).onConflictDoUpdate({ target: stockItems.id, set: { qty: s.qty } }).run();
+  db.insert(stockMoves).values({ id: `mov_test_${i + 1}`, itemId: id, kind: "count", qty: s.qty, qtyAfter: s.qty, note: "first count", userName: "Demo Admin", createdAt: now - 3 * 86400 }).run();
 });
 
 const xrayDir = path.resolve(process.env.DATA_DIR || "./data", "xrays");
