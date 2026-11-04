@@ -5,6 +5,7 @@ import { invoices, patients, treatments } from "@/db/schema";
 import { requireUser } from "@/lib/api";
 import { audit } from "@/lib/audit";
 import { totals } from "@/lib/invoices";
+import { parsePlan, planProgress, sanitizePlan } from "@/lib/payment-plan";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,9 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
   const invoice = find(params.id);
   if (!invoice) return NextResponse.json({ error: "not found" }, { status: 404 });
   const patient = db.select().from(patients).where(eq(patients.id, invoice.patientId)).get();
-  return NextResponse.json({ ...invoice, patient: patient ?? null, ...totals(invoice.id) });
+  const t = totals(invoice.id);
+  const plan = parsePlan(invoice.paymentPlan);
+  return NextResponse.json({ ...invoice, patient: patient ?? null, ...t, plan, planProgress: planProgress(plan, t.total, t.paid) });
 }
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
@@ -28,6 +31,15 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (!invoice) return NextResponse.json({ error: "not found" }, { status: 404 });
 
   const body = await req.json().catch(() => ({}));
+  if ("paymentPlan" in body) {
+    if (invoice.status === "void") return NextResponse.json({ error: "a void invoice has no plan" }, { status: 409 });
+    const plan = sanitizePlan(body.paymentPlan);
+    if (typeof plan === "string") return NextResponse.json({ error: plan }, { status: 400 });
+    db.update(invoices).set({ paymentPlan: plan.length ? JSON.stringify(plan) : null }).where(eq(invoices.id, invoice.id)).run();
+    const words = plan.length ? plan.map((x) => `${x.label} ${x.pct}%`).join(", ") : "removed";
+    audit(user, "update", "invoice", invoice.id, `payment plan on invoice ${invoice.number}: ${words}`);
+  }
+
   if ("note" in body) {
     db.update(invoices).set({ note: body.note || null }).where(eq(invoices.id, invoice.id)).run();
     audit(user, "update", "invoice", invoice.id, `edited note on invoice ${invoice.number}`);
