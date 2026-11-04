@@ -1,6 +1,6 @@
 import { and, asc, eq, gte, inArray, lt, ne, sql } from "drizzle-orm";
 import { db } from "@/db/client";
-import { appointments, invoices, patientTasks, patients, recalls } from "@/db/schema";
+import { appointments, invoices, patientTasks, patients, recalls, stockItems } from "@/db/schema";
 import { totals } from "@/lib/invoices";
 
 export function todayRange() {
@@ -102,4 +102,13 @@ export function getCounts() {
     .all()
     .reduce((sum, i) => sum + totals(i.id).balance, 0);
   return { activePatients, appointmentsToday, overdueRecalls, owed: Math.round(owed * 100) / 100 };
+}
+
+export function getLowStock() {
+  return db
+    .select()
+    .from(stockItems)
+    .where(sql`${stockItems.lowAt} is not null and ${stockItems.qty} <= ${stockItems.lowAt}`)
+    .orderBy(asc(stockItems.name))
+    .all();
 }

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
-import { getCounts, getOpenInvoices, getOpenTasks, getOverdueRecalls, getToday } from "@/lib/dashboard";
+import { getCounts, getLowStock, getOpenInvoices, getOpenTasks, getOverdueRecalls, getToday } from "@/lib/dashboard";
 import { todayDate } from "@/lib/dashboard";
 
 export const dynamic = "force-dynamic";
@@ -22,6 +22,7 @@ export default function Home() {
   const overdue = getOverdueRecalls();
   const open = getOpenInvoices();
   const tasks = getOpenTasks();
+  const lowStock = getLowStock();
   const todayStr = todayDate();
 
   return (
@@ -84,6 +85,20 @@ export default function Home() {
         ))}
         {tasks.length === 0 && <li className="p-4 text-slate-400">All caught up.</li>}
       </ul>
+
+      {lowStock.length > 0 && (
+        <>
+          <h2 className="mb-2 mt-8 font-semibold">Running low</h2>
+          <ul className="max-w-3xl rounded-lg border bg-white text-sm">
+            {lowStock.map((s) => (
+              <li key={s.id} className="flex items-center justify-between border-b p-3 last:border-0">
+                <Link href="/stock" className="text-brand">{s.name}</Link>
+                <span className="text-xs text-red-600">{s.qty} {s.unit} left, low at {s.lowAt}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
 
       <h2 className="mb-2 mt-8 font-semibold">Open invoices</h2>
       <ul className="max-w-3xl rounded-lg border bg-white text-sm">
