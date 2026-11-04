@@ -16,6 +16,16 @@ A simplified demo of a clinic CRM, built as a portfolio project. It is not a pro
 - To do: small tasks tied to patients, with due dates
 - Audit log: who changed what
 - X-rays: upload a panoramic image, run segmentation, see the masks on the image
+- Quotes: treatment quotes with core, optional and free lines. Optional extras are priced but stay out of the total. A printable A4 sheet, and an accepted quote becomes an invoice with only its core lines
+- Payment plans: split an invoice into steps (for example 30 / 40 / 30). How much of each step is paid is read from the real payments, in order, so the plan never disagrees with the money
+- Stock room: supplies with a running count. Stock only changes through a logged move (used, restocked, counted) and the waiting room lists what is running low
+- Attendance: staff clock in and out. The first arrival of the day is marked early, on time or late against a rule you can change. Lunch returns are not judged, a forgotten clock out is closed at the end of its own day, and the report shows "no data" rather than a flattering 100%
+- Day plan: one day as a grid of calendars and half hours, overlapping bookings flagged, a note per day, printable on one A4 landscape page
+- Recall messages: the reminder in the patient's language (English, Albanian, Italian, German), ready to copy or open in WhatsApp
+- Duplicate check: a new patient whose phone or email is already on file is shown the existing record. A phone match cannot be overridden, an email match can
+- Search: Ctrl K anywhere finds pages, patients, invoices and quotes
+- CSV export: the patient list and the audit log by date range, both written to the audit log when downloaded
+- Works on a phone: the sidebar becomes a slide out menu and wide tables scroll in their own box
 
 ## How it is simplified
 
