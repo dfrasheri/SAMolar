@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import { db } from "../src/db/client";
 import { eq, like } from "drizzle-orm";
-import { users, patients, calendars, appointments, services, treatments, invoices, invoiceLines, payments, recalls, auditLog, patientImages, patientNotes, patientTasks, stockItems, stockMoves } from "../src/db/schema";
+import { users, patients, calendars, appointments, services, treatments, invoices, invoiceLines, payments, recalls, auditLog, patientImages, patientNotes, patientTasks, stockItems, stockMoves, staff, attendance } from "../src/db/schema";
 import { saveUpload, sniffImage } from "../src/lib/storage";
 import { hashPassword } from "../src/lib/password";
 
@@ -168,6 +168,34 @@ fakeStock.forEach((s, i) => {
   db.insert(stockItems).values({ id, name: s.name, unit: s.unit, qty: s.qty, lowAt: s.lowAt }).onConflictDoUpdate({ target: stockItems.id, set: { qty: s.qty } }).run();
   db.insert(stockMoves).values({ id: `mov_test_${i + 1}`, itemId: id, kind: "count", qty: s.qty, qtyAfter: s.qty, note: "first count", userName: "Demo Admin", createdAt: now - 3 * 86400 }).run();
 });
+
+const fakeStaff = [
+  { id: "stf_test_1", name: "Dr. Test One", role: "doctor", start: 0 },
+  { id: "stf_test_2", name: "Dr. Test Two", role: "doctor", start: 10 },
+  { id: "stf_test_3", name: "Assistant Test", role: "assistant", start: -12 },
+  { id: "stf_test_4", name: "Reception Test", role: "reception", start: 25 },
+];
+fakeStaff.forEach((s) => db.insert(staff).values({ id: s.id, name: s.name, role: s.role }).onConflictDoNothing().run());
+
+// Two weeks of fake clock ins around 09:00, no Sundays, with a little jitter
+// and the odd lunch return and forgotten clock out.
+db.delete(attendance).where(like(attendance.id, "att_test_%")).run();
+let n = 0;
+for (let back = 14; back >= 1; back--) {
+  const d = new Date(day.getTime() - back * 86400000);
+  if (d.getDay() === 0) continue;
+  const ymd = dateOffset(-back);
+  fakeStaff.forEach((s, k) => {
+    if ((back + k) % 9 === 0) return;
+    const jitter = ((back * 7 + k * 13) % 21) - 10;
+    const inAt = Math.floor(d.getTime() / 1000) + (9 * 60 + s.start + jitter) * 60;
+    const forgot = (back + k) % 11 === 0;
+    db.insert(attendance).values({ id: `att_test_${++n}`, staffId: s.id, day: ymd, clockIn: inAt, clockOut: forgot ? null : inAt + 4 * 3600 }).run();
+    if (!forgot && k % 2 === 0) {
+      db.insert(attendance).values({ id: `att_test_${++n}`, staffId: s.id, day: ymd, clockIn: inAt + 5 * 3600, clockOut: inAt + 8.5 * 3600 }).run();
+    }
+  });
+}
 
 const xrayDir = path.resolve(process.env.DATA_DIR || "./data", "xrays");
 for (let i = 1; i <= 3; i++) {
