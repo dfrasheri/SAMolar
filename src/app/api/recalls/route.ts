@@ -25,6 +25,7 @@ export async function GET(req: Request) {
       lastName: patients.lastName,
       phone: patients.phone,
       email: patients.email,
+      language: patients.language,
     })
     .from(recalls)
     .leftJoin(patients, eq(patients.id, recalls.patientId))
