@@ -2,21 +2,11 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Users, CalendarDays, Tag, Receipt, BellRing, ListChecks, ScrollText, Package, Clock, FileText, LogOut } from "lucide-react";
+import { LogOut, Search } from "lucide-react";
+import { NAV } from "@/lib/nav";
+import { openSearch } from "@/components/CommandPalette";
 
-const links = [
-  { href: "/", label: "Waiting room", icon: LayoutDashboard },
-  { href: "/patients", label: "Patients", icon: Users },
-  { href: "/calendar", label: "Appointments book", icon: CalendarDays },
-  { href: "/services", label: "Services", icon: Tag },
-    { href: "/quotes", label: "Quotes", icon: FileText },
-{ href: "/invoices", label: "Invoices", icon: Receipt },
-  { href: "/recalls", label: "Recall list", icon: BellRing },
-  { href: "/tasks", label: "To do", icon: ListChecks },
-  { href: "/stock", label: "Stock room", icon: Package },
-  { href: "/attendance", label: "Attendance", icon: Clock },
-  { href: "/audit", label: "Audit log", icon: ScrollText },
-];
+const links = NAV;
 
 export default function Sidebar({ userName }: { userName: string }) {
   const path = usePathname();
@@ -30,7 +20,12 @@ export default function Sidebar({ userName }: { userName: string }) {
 
   return (
     <aside className="flex w-56 flex-col border-r bg-white p-4">
-      <div className="mb-6 text-lg font-semibold text-brand">SAMolar</div>
+      <div className="mb-4 text-lg font-semibold text-brand">SAMolar</div>
+      <button onClick={openSearch} className="mb-4 flex items-center gap-2 rounded border px-3 py-2 text-left text-sm text-slate-400 hover:bg-slate-50">
+        <Search size={14} />
+        <span className="flex-1">Search</span>
+        <kbd className="text-[10px]">Ctrl K</kbd>
+      </button>
       <nav className="flex-1 space-y-1">
         {links.map(({ href, label, icon: Icon }) => {
           const active = href === "/" ? path === "/" : path.startsWith(href);
