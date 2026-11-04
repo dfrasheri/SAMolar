@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Fragment } from "react";
+import RecallMessage from "@/components/RecallMessage";
 
 type Recall = {
   id: string;
@@ -14,6 +16,7 @@ type Recall = {
   lastName: string | null;
   phone: string | null;
   email: string | null;
+  language: string | null;
 };
 type Patient = { id: string; firstName: string | null; lastName: string | null };
 
@@ -26,6 +29,7 @@ export default function RecallsPage() {
   const [form, setForm] = useState({ patientId: "", dueDate: "", reason: "" });
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [composing, setComposing] = useState<string | null>(null);
 
   async function load() {
     const res = await fetch(`/api/recalls${status ? `?status=${status}` : ""}`);
@@ -58,17 +62,19 @@ export default function RecallsPage() {
     load();
   }
 
-  async function contact(r: Recall, channel: string) {
+  async function contact(r: Recall, channel: string, lang?: string) {
     setMessage("");
     setError("");
     const res = await fetch(`/api/recalls/${r.id}/contact`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ channel }),
+      body: JSON.stringify({ channel, lang }),
     });
     const data = await res.json();
     if (!res.ok) return setError(data.error || "could not contact");
-    setMessage(`Stub: would send a ${channel} to ${[r.firstName, r.lastName].filter(Boolean).join(" ")}. Nothing was sent, check the terminal log.`);
+    const who = [r.firstName, r.lastName].filter(Boolean).join(" ");
+    setMessage(channel === "manual" ? `Marked ${who} as contacted.` : `Stub: would send a ${channel} to ${who} in ${data.lang}. Nothing was sent, check the terminal log.`);
+    setComposing(null);
     load();
   }
 
@@ -115,7 +121,8 @@ export default function RecallsPage() {
             const open = r.status === "pending" || r.status === "contacted";
             const overdue = open && r.dueDate < today;
             return (
-              <tr key={r.id} className="border-b last:border-0">
+              <Fragment key={r.id}>
+              <tr className="border-b last:border-0">
                 <td className={`p-3 ${overdue ? "font-medium text-red-600" : ""}`}>
                   {r.dueDate}
                   {overdue && <span className="ml-1 text-xs">overdue</span>}
@@ -130,6 +137,7 @@ export default function RecallsPage() {
                 <td className="space-x-3 p-3 text-right">
                   {open && (
                     <>
+                      <button onClick={() => setComposing(composing === r.id ? null : r.id)} className="text-brand">Message</button>
                       {r.phone && <button onClick={() => contact(r, "sms")} className="text-brand">SMS</button>}
                       {r.phone && <button onClick={() => contact(r, "whatsapp")} className="text-brand">WhatsApp</button>}
                       {r.email && <button onClick={() => contact(r, "email")} className="text-brand">Email</button>}
@@ -142,6 +150,14 @@ export default function RecallsPage() {
                   )}
                 </td>
               </tr>
+              {composing === r.id && (
+                <tr className="border-b">
+                  <td colSpan={5} className="p-3">
+                    <RecallMessage recall={r} onContacted={(lang) => contact(r, "manual", lang)} onClose={() => setComposing(null)} />
+                  </td>
+                </tr>
+              )}
+              </Fragment>
             );
           })}
           {rows.length === 0 && (
