@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import { db } from "../src/db/client";
 import { eq, like } from "drizzle-orm";
-import { users, patients, calendars, appointments, services, treatments, invoices, invoiceLines, payments, recalls, auditLog, patientImages, patientNotes, patientTasks, stockItems, stockMoves, staff, attendance } from "../src/db/schema";
+import { users, patients, calendars, appointments, services, treatments, invoices, invoiceLines, payments, recalls, auditLog, patientImages, patientNotes, patientTasks, stockItems, stockMoves, staff, attendance, quotes, quoteLines } from "../src/db/schema";
 import { saveUpload, sniffImage } from "../src/lib/storage";
 import { hashPassword } from "../src/lib/password";
 
@@ -196,6 +196,19 @@ for (let back = 14; back >= 1; back--) {
     }
   });
 }
+
+// Two fake quotes: an implant plan with an optional extra, and a whitening offer.
+db.delete(quoteLines).where(like(quoteLines.id, "qul_test_%")).run();
+db.insert(quotes).values({ id: "quo_test_1", number: "Q-0001", patientId: "pat_test_2", status: "sent", validUntil: dateOffset(30), note: "Plan after the first examination.", createdAt: now - 6 * 86400 }).onConflictDoNothing().run();
+db.insert(quotes).values({ id: "quo_test_2", number: "Q-0002", patientId: "pat_test_3", status: "draft", validUntil: dateOffset(14), createdAt: now - 2 * 86400 }).onConflictDoNothing().run();
+const fakeQuoteLines = [
+  { quoteId: "quo_test_1", serviceId: "svc_test_6", description: "Implant", tooth: 14, unitPrice: 900, band: "core" },
+  { quoteId: "quo_test_1", serviceId: "svc_test_5", description: "Crown", tooth: 14, unitPrice: 400, band: "core" },
+  { quoteId: "quo_test_1", serviceId: "svc_test_1", description: "Checkup", tooth: null, unitPrice: 0, band: "free" },
+  { quoteId: "quo_test_1", serviceId: "svc_test_4", description: "Whitening", tooth: null, unitPrice: 150, band: "optional" },
+  { quoteId: "quo_test_2", serviceId: "svc_test_4", description: "Whitening", tooth: null, unitPrice: 150, band: "core" },
+];
+fakeQuoteLines.forEach((l, i) => db.insert(quoteLines).values({ id: `qul_test_${i + 1}`, position: i, quantity: 1, ...l }).run());
 
 const xrayDir = path.resolve(process.env.DATA_DIR || "./data", "xrays");
 for (let i = 1; i <= 3; i++) {
