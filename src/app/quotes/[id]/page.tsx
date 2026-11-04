@@ -115,7 +115,7 @@ export default function QuoteEditor() {
         </div>
       )}
 
-      <fieldset disabled={locked} className="space-y-3">
+      <fieldset disabled={locked} className="min-w-0 space-y-3">
         <div className="overflow-x-auto rounded-lg border bg-white">
           <table className="w-full text-sm">
             <thead className="border-b bg-slate-50 text-left text-xs text-slate-500">
