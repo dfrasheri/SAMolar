@@ -7,6 +7,7 @@ import TreatmentsPanel from "@/components/TreatmentsPanel";
 import ImagingPanel from "@/components/ImagingPanel";
 import PatientHistory from "@/components/PatientHistory";
 import NotesPanel from "@/components/NotesPanel";
+import ExistingPatientCard, { type ExistingMatch } from "@/components/ExistingPatientCard";
 
 export default function PatientPage() {
   const { id } = useParams<{ id: string }>();
@@ -14,6 +15,8 @@ export default function PatientPage() {
   const [initial, setInitial] = useState<PatientFormData | null>(null);
   const [saved, setSaved] = useState(false);
   const [missing, setMissing] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [match, setMatch] = useState<ExistingMatch | null>(null);
 
   useEffect(() => {
     fetch(`/api/patients/${id}`).then(async (res) => {
@@ -45,15 +48,23 @@ export default function PatientPage() {
         initial={initial}
         submitLabel="Save"
         onSubmit={async (data) => {
-          await fetch(`/api/patients/${id}`, {
+          setSaved(false);
+          setSaveError("");
+          setMatch(null);
+          const res = await fetch(`/api/patients/${id}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data),
           });
+          const j = await res.json().catch(() => ({}));
+          if (res.status === 409 && j.match) return setMatch(j.match);
+          if (!res.ok) return setSaveError(j.error || "could not save");
           setSaved(true);
         }}
       />
       {saved && <p className="mt-2 text-sm text-brand">Saved.</p>}
+      {saveError && <p className="mt-2 text-sm text-red-600">{saveError}</p>}
+      {match && <ExistingPatientCard match={match} canForce={false} onCancel={() => setMatch(null)} />}
       <NotesPanel patientId={id} />
       <PatientHistory patientId={id} />
       <TreatmentsPanel patientId={id} />
