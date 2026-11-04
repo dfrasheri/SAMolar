@@ -160,3 +160,24 @@ export const patientTasks = sqliteTable("patient_tasks", {
   done: integer("done", { mode: "boolean" }).notNull().default(false),
   createdAt: integer("created_at").default(sql`(unixepoch())`),
 });
+
+export const stockItems = sqliteTable("stock_items", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  unit: text("unit").notNull().default("piece"),
+  qty: real("qty").notNull().default(0),
+  lowAt: real("low_at"),
+  note: text("note"),
+  createdAt: integer("created_at").default(sql`(unixepoch())`),
+});
+
+export const stockMoves = sqliteTable("stock_moves", {
+  id: text("id").primaryKey(),
+  itemId: text("item_id").notNull(),
+  kind: text("kind").notNull(),
+  qty: real("qty").notNull(),
+  qtyAfter: real("qty_after").notNull(),
+  note: text("note"),
+  userName: text("user_name"),
+  createdAt: integer("created_at").default(sql`(unixepoch())`),
+});
