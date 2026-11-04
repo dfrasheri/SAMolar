@@ -5,3 +5,18 @@
 body {
   @apply bg-slate-50 text-slate-900;
 }
+
+/* On a phone a wide table scrolls inside its own box instead of pushing the
+   whole page sideways. */
+@media (max-width: 767px) {
+  main table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+  main input,
+  main select,
+  main textarea {
+    max-width: 100%;
+  }
+}
