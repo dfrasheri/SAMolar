@@ -83,6 +83,7 @@ export const invoices = sqliteTable("invoices", {
   note: text("note"),
   createdAt: integer("created_at").default(sql`(unixepoch())`),
   paidAt: integer("paid_at"),
+  paymentPlan: text("payment_plan"),
 });
 
 export const invoiceLines = sqliteTable("invoice_lines", {
