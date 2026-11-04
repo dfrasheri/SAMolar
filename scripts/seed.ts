@@ -92,6 +92,7 @@ db.insert(invoices).values({ id: "inv_test_2", number: "INV-0002", patientId: "p
 db.insert(invoiceLines).values({ id: "inl_test_2", invoiceId: "inv_test_2", description: "Filling (tooth 25)", quantity: 1, unitPrice: 80, treatmentId: "trt_test_6" }).onConflictDoNothing().run();
 db.insert(payments).values({ id: "pay_test_2", invoiceId: "inv_test_2", amount: 30, method: "card", ref: "stub-card-2", createdAt: now - 8 * 86400 }).onConflictDoNothing().run();
 db.update(treatments).set({ invoiceId: "inv_test_2" }).where(eq(treatments.id, "trt_test_6")).run();
+db.update(invoices).set({ paymentPlan: JSON.stringify([{ label: "Deposit", pct: 30 }, { label: "At treatment", pct: 40 }, { label: "At the end", pct: 30 }]) }).where(eq(invoices.id, "inv_test_2")).run();
 
 const dateOffset = (days: number) => {
   const x = new Date(day.getTime() + days * 86400000);
