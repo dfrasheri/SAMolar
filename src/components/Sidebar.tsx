@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Users, CalendarDays, Tag, Receipt, BellRing, ListChecks, ScrollText, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, CalendarDays, Tag, Receipt, BellRing, ListChecks, ScrollText, Package, LogOut } from "lucide-react";
 
 const links = [
   { href: "/", label: "Waiting room", icon: LayoutDashboard },
@@ -12,6 +12,7 @@ const links = [
   { href: "/invoices", label: "Invoices", icon: Receipt },
   { href: "/recalls", label: "Recall list", icon: BellRing },
   { href: "/tasks", label: "To do", icon: ListChecks },
+  { href: "/stock", label: "Stock room", icon: Package },
   { href: "/audit", label: "Audit log", icon: ScrollText },
 ];
 
