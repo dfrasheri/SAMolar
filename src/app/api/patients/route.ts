@@ -4,6 +4,7 @@ import { db } from "@/db/client";
 import { patients } from "@/db/schema";
 import { newId, pick, requireUser } from "@/lib/api";
 import { audit } from "@/lib/audit";
+import { findExisting } from "@/lib/identity";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,13 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   if (!body.firstName && !body.lastName) {
     return NextResponse.json({ error: "name required" }, { status: 400 });
+  }
+
+  // Tell the desk who this already is instead of making a twin. An email match
+  // can be overridden (two people may share a family address), a phone cannot.
+  const match = findExisting(body);
+  if (match && (match.by === "phone" || !body.force)) {
+    return NextResponse.json({ error: `already a patient: ${match.name}`, code: "patient-exists", match, canForce: match.by !== "phone" }, { status: 409 });
   }
 
   const id = newId("pat");
