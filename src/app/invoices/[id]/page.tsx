@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import PaymentPlan from "@/components/PaymentPlan";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 
@@ -16,6 +17,8 @@ type Invoice = {
   total: number;
   paid: number;
   balance: number;
+  plan: { label: string; pct: number }[];
+  planProgress: { label: string; pct: number; due: number; covered: number; state: string }[];
 };
 
 export default function InvoicePage() {
@@ -118,6 +121,8 @@ export default function InvoicePage() {
           <tr><td className="p-3 font-medium" colSpan={3}>Balance</td><td className="p-3 font-medium">{inv.balance.toFixed(2)}</td></tr>
         </tfoot>
       </table>
+
+      <PaymentPlan invoiceId={inv.id} plan={inv.plan} progress={inv.planProgress} editable={inv.status !== "void"} onSaved={load} />
 
       <h2 className="mb-2 font-semibold">Payments</h2>
       <ul className="mb-4 rounded-lg border bg-white text-sm">
