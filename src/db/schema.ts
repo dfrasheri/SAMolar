@@ -181,3 +181,26 @@ export const stockMoves = sqliteTable("stock_moves", {
   userName: text("user_name"),
   createdAt: integer("created_at").default(sql`(unixepoch())`),
 });
+
+export const settings = sqliteTable("settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+});
+
+export const staff = sqliteTable("staff", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  role: text("role").notNull().default("assistant"),
+  active: integer("active", { mode: "boolean" }).notNull().default(true),
+  createdAt: integer("created_at").default(sql`(unixepoch())`),
+});
+
+export const attendance = sqliteTable("attendance", {
+  id: text("id").primaryKey(),
+  staffId: text("staff_id").notNull(),
+  day: text("day").notNull(),
+  clockIn: integer("clock_in").notNull(),
+  clockOut: integer("clock_out"),
+  closedBy: text("closed_by"),
+  note: text("note"),
+});
